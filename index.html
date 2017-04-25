@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form  { background: #ececec; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      .name {position:fixed; display:flex; align-items: center; justify-content: center;
+       width: 100%; height:100%; background:none;}
+      .name div input {border: 1px solid lightgrey; width: 100%;}
+      .name div button {width: 100%;}
+      .hide {display:none}
+      .isTyping {position:fixed; bottom: 45px; width: 100%; text-align:center; color: green;}
+      .Users {position:fixed; bottom: 45px; width: 100%; text-align:right; color: green;}
+    </style>
+  </head>
+  <body >
+    <ul id="messages"></ul>
+    <div class="isTyping">
+        <p></p>
+    </div>
+    <div class="Users">
+        <p></p>
+    </div>
+    <form id='msg' action="">
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <form class='name'>
+        <div>
+            <label for="">
+                Write a nickname: 
+            <input type="text" id="name">
+            <button>Enter</button>
+            </label>    
+        </div>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+    $(function () {
+        var nickname = '';
+        var socket = io();
+        $('form#msg').submit(function(e){
+            e.preventDefault();
+            socket.emit('chat message', nickname +" : " + $('#m').val());
+            $('#m').val('');
+
+            return false;
+        });
+        socket.on('user connected', function(msg) {
+            $('#messages').append($('<li>').text(msg));
+        })
+        socket.on('user disconnected', function(msg) {
+            $('#messages').append($('<li>').text(msg));
+        })
+        socket.on('chat message', function(msg) {
+            $('#messages').append($('<li>').text(msg));
+        });
+        socket.on('isTyping', function(msg) {
+            $('.isTyping p').html(msg);
+        })
+        socket.on('connectedUsers', function(msg) {
+            $('.Users p').html("Users: " + msg);
+        })
+
+       
+        $('form.name').submit(function() {
+          
+            nickname = $('#name').val();
+            $('form.name').addClass('hide');   
+            console.log(nickname);
+            return false;
+        });
+
+        $('#m').focus(function(){
+            console.log($('#m').val());
+            socket.emit('isTyping', nickname + ' is typing');
+            
+        })
+       
+        $('#m').change(function(){
+            console.log($('#m').val());
+            socket.emit('isTyping', nickname + ' is typing');
+        })
+        $('#m').blur(function(){
+            socket.emit('isTyping' , '' );
+        })
+    });
+    </script>
+  </body>
+</html>
